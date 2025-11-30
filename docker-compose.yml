@@ -1,0 +1,53 @@
+networks:
+  users-service-network:
+    driver: bridge
+  app-network:
+    driver: bridge
+
+services:
+  users-service-database:
+    container_name: users-service-database
+    image: mongo:latest
+    restart: unless-stopped
+    ports:
+      - "27019:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin_root
+      - MONGO_INITDB_ROOT_PASSWORD=password_root
+    volumes:
+      - ./services/users/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - users-service-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--username",
+          "admin_root",
+          "--password",
+          "password_root",
+          "--authenticationDatabase",
+          "admin",
+          "--eval",
+          "db.runCommand({ ping: 1 })",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+
+  users-service:
+    container_name: users-service
+    ports:
+      - "3000:3000"
+    build:
+      context: ./services/users
+      dockerfile: Dockerfile
+    depends_on:
+      users-service-database:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - logs-service-network
+      - app-network
