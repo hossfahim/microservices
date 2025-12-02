@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	mongoURI := getEnv("MONGO_URI", "mongodb://user_app:strong_app_password@users-service-database:27017/user_db?authSource=ridenow_users")
+	mongoURI := getEnv("MONGO_URI", "mongodb://localhost:27017/user_db?authSource=ridenow_users")
 	db, err := database.InitMongoDB(mongoURI)
 	if err != nil {
 		log.Fatal(err)
